@@ -10,6 +10,7 @@ from tqdm import tqdm
 from read_raw import Color, get_interpolation, read_uint12
 from preprocess import parrallel_processing_frames
 from fitting import fit_gaussian, fit_pv
+from error_funcs import oned_gaussian_func
 
 BG_CURRENT = "10A"
 # TODO: Making script into functions
@@ -82,7 +83,7 @@ if __name__ == "__main__":
     #tr = box / "MURI-SARA" / "Thermoreflectance" 
     #raw_fp = tr / "2022.03 Velocity Scans" / "15mm per sec"
     raw_fp = home / "Desktop" / "TR"
-    dir_paths = raw_fp.glob("15mm per sec")
+    dir_paths = raw_fp.glob("55mm per sec")
     for dir_path in dir_paths:
         print(f"working on {str(dir_path)}")
         current_ls = set() 
@@ -110,30 +111,21 @@ if __name__ == "__main__":
             bgs = np.array(bgs)
             data = np.array(data)
             r = (data - bgs)/bgs
-            temp_fit = parrallel_processing_frames(data, bgs, (400, 900), (350, 1600))
-            t.append(temp_fit)
-            
             oned_fit = []
-            #do_oned_gaussian_fit()
-            for idx, fit in enumerate(temp_fit):
-                if fit[1]<0 or fit[1]>800:
-                    mid = np.median(np.array(temp_fit)[:,1])
-                else:
-                    mid = fit[1]
-                    
-                pfit = fit_gaussian(r[idx, int(400+mid), 350:1600])
-                oned_fit.append(pfit.tolist())
+            for i in range(r.shape[0]):
+                t = []
+                for j in range(100):
+                    pfit, _ = fit_gaussian(r[i, 600+j, 350:1600])
+                    t.append(pfit) 
+                t = np.array(t)
+                fit, _ = fit_gaussian(t[:,0])
+                pfit, err = fit_gaussian(r[i, int(np.round(600+fit[1])), 350:1600])
+                oned_fit.append(np.append(pfit, err).tolist()) 
             oned_fits.append(oned_fit)
+            
         export_dict = {}
         for idx, fit in enumerate(oned_fits): 
             export_dict[current_ls[idx]] = fit
 
         with open(f"{str(dir_path)}.json", 'w') as f:
             json.dump(export_dict, f)
-            
-        # For each current, find corresponding background
-        # do R-R0
-        # Then fit with bigaussian to find the proper peak position
-        # get intensity, width_x, width_y
-        # might want to get 1d gaussian fit at the center for better fit as well
-

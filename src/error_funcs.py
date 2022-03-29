@@ -4,6 +4,11 @@ import math
 import numpy as np
 import sympy as sp
 
+yth = 12.6
+
+def new_temp_surface(a, b, c, d, e, f, g, h):
+    return lambda x, y: (a*x**2+b*x+c+d*np.sqrt(x))*(y-yth)**2 + (e*x**2+f*x+g+h*np.sqrt(x))*(y-yth)
+
 def linear(a,b):
     ''' Linear function ax+b'''
     return lambda x: a*x+b
@@ -21,9 +26,13 @@ def temp_surface(base, a, b, c, d, e, f, g):
     return lambda x, y: ( base + a*x + b*y + c*x**2 + d*y**2 
                           + e*x*y + f*x*y**2 + g*x**2* y )
 
-def temp_surface_sp(base, a, b, c, d, e, f, g):
+#def temp_surface_sp(base, a, b, c, d, e, f, g):
+#    ''' Temperture surface'''
+#    return lambda x, y: base + a*x + b*y + c*x**2 + d*y**2 + e*x*y + f*np.sqrt(x) + g*np.sqrt(y)
+def temp_surface_sp(base, a, b,  d, e, f, g):
     ''' Temperture surface'''
-    return lambda x, y: base + a*x + b*y + c*x**2 + d*y**2 + e*x*y + f*sp.sqrt(x) + g*sp.sqrt(y)
+    return lambda x, y: base + a*x + b*y  + d*y**2 + e*x*y + f*np.sqrt(x) + g*np.sqrt(y)
+
 
 def jacobian_twod_surface():
     ''' Jacobian of a quadratic function at position (x, y)'''

@@ -8,12 +8,15 @@ from read_raw import load_blue
 
 home = Path.home() 
 path = home / "Desktop" / "TR" 
-dir_path = path / "35mm per sec"
+dir_paths = path.glob("15mm per sec")
 
-fp = dir_path.glob("*.raw")
-
-for f in tqdm(fp):
-    b = load_blue(str(f))
-    plt.imshow(b)
-    plt.savefig( str(path) + os.path.basename(f)[:-4]  + ".png" )
-    plt.close()
+for dir_path in dir_paths:
+    fp = dir_path.glob("*.raw")
+    velo = os.path.basename(dir_path)
+    velo = velo[:velo.index("mm")]
+    for f in tqdm(fp):
+        b = load_blue(str(f))
+        plt.imshow(b)
+        plt.savefig( str(path) +'/'+ velo + '_' +  os.path.basename(f)[:-4]  + ".png" )
+        plt.clf()
+        plt.close("all")

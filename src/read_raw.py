@@ -1,6 +1,6 @@
 from pathlib import Path
 from enum import Enum
-
+from cv2 import imwrite
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -9,6 +9,9 @@ X_DIM = 1200
 Y_DIM = 1920 
 BLUE_FILTER = np.tile(np.vstack((np.zeros(Y_DIM), np.tile([1,0], Y_DIM//2))),
                      (X_DIM//2, 1))
+RED_FILTER = np.tile(np.vstack((np.tile([0, 1], Y_DIM//2), np.zeros(Y_DIM))),
+                     (X_DIM//2, 1))
+GREEN_FILTER = np.tile(np.vstack((np.tile([1,0], Y_DIM//2), np.tile([0, 1], Y_DIM//2))), (X_DIM//2, 1))
 
 def load_blue(fp):
     with open(fp, 'br') as f:
@@ -61,7 +64,7 @@ def get_top_right_corner(data: np.array, color: Color):
     if color == Color.Red:
         return data[0, -1]
     elif color == Color.Green:
-        return (data[0, 0] + datap[1,1])/2
+        return (data[0, 0] + data[1,1])/2
     else:
         return data[0, 1]
 
@@ -132,7 +135,7 @@ def get_interpolation(data: np.array, color: Color) -> float:
     # Edges
 
     if color == Color.Blue: # TODO: Use matrix operation instead for center pixels
-        blue = data*BLUE_FILTER
+        blue = data * BLUE_FILTER
         for i in range(1, data.shape[1]-1):
             new_data[0, i] = get_blue_top_edge(data, i)
             new_data[-1, i] = get_blue_bottom_edge(data, i)
@@ -152,8 +155,24 @@ def get_interpolation(data: np.array, color: Color) -> float:
         #for pos_x in range(1, data.shape[0]-1):
         #    for pos_y in range(1, data.shape[1]-1):
         #        new_data[pos_x, pos_y] = get_b_interpolation(data, pos_x, pos_y)
-    else:
-        raise NotImplementedError
+    elif color == Color.Red:
+        red = data * RED_FILTER
+        new_data += red 
+        new_data += ( (np.roll(red, 1, axis=1)
+                        + np.roll(red, -1, axis=1)
+                        + np.roll(red, 1, axis=0)
+                        + np.roll(red, -1, axis=0))/2
+                      + ( np.roll(red, (1,1), axis=(0,1))
+                        + np.roll(red, (-1,1), axis=(0,1))
+                        + np.roll(red, (1,-1), axis=(0,1))
+                        + np.roll(red, (-1,-1), axis=(0,1))) /4)
+    elif color == Color.Green:
+        green = data * GREEN_FILTER
+        new_data += green 
+        new_data += (   np.roll(green, (0,1), axis=(0,1))
+                      + np.roll(green, (1,0), axis=(0,1))
+                      + np.roll(green, (-1,0), axis=(0,1))
+                      + np.roll(green, (0,-1), axis=(0,1))) /4
     return new_data
 #    color = get_color(pos_x, pos_y)
 #    if color == Color.Green:
@@ -185,9 +204,8 @@ def get_g_interpolation(data: np.array, pos_x: int, pos_y:int) -> float:
 
 if __name__ == "__main__":
     home = Path.home()
-    path = home / 'Downloads' / 'image.raw' 
-
-    path = "/Users/ming/Library/CloudStorage/Box-Box/MURI-SARA/Thermoreflectance/2022.03 Velocity Scans/15mm per sec/-16mm_10A_026.raw"
+    path = home / 'Desktop' / 'TR' / "35mm per sec" / "10mm_79A_020.raw" 
+    path = home / "Downloads" / "img_+00_+00.post.raw"
 
     with open(path, 'br') as f:
         data = f.read()
@@ -199,9 +217,27 @@ if __name__ == "__main__":
 
     val = read_uint12(data[152:]) # TODO: Check why this has to be like this..
     val = val.reshape(1200, 1920)
+    f = np.zeros((1200, 1920, 3)) 
     
     d = get_interpolation(val, Color.Blue)
-    fig, ax = plt.subplots(2)
-    ax[0].imshow(val)
-    ax[1].imshow(d)
+    r = get_interpolation(val, Color.Red)
+    g = get_interpolation(val, Color.Green)
+    fig, ax = plt.subplots(2,2)
+    ax[0, 0].imshow(val)
+    ax[0, 0].set_title("Origin raw")
+    ax[0, 1].imshow(d)
+    ax[0, 1].set_title("blue channel")
+    ax[1, 0].imshow(r)
+    ax[1, 0].set_title("red channel")
+    ax[1, 1].imshow(g)
+    ax[1, 1].set_title("green channel")
+    fig.suptitle("MURI-SARA/Thermoreflectance/2022.03 Velocity Scans/35mm per sec/10mm_79A_020.raw")
     plt.show()
+
+    f[:,:,0] = r
+    f[:,:,1] = g
+    f[:,:,2] = d
+    np.save("10mm_79A_20.npy", f)
+    f *= (256/4096)
+    print(f.shape)
+    imwrite("/Users/ming/Desktop/test.bmp", f)
