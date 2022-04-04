@@ -3,11 +3,16 @@ import math
 
 import numpy as np
 import sympy as sp
+from scipy.stats import pearson3
 
-yth = 12.6
+yth = 0 
 
 def new_temp_surface(a, b, c, d, e, f, g, h):
     return lambda x, y: (a*x**2+b*x+c+d*np.sqrt(x))*(y-yth)**2 + (e*x**2+f*x+g+h*np.sqrt(x))*(y-yth)
+
+def test_new_temp_surface(a, b, c, d, e, f):
+    return lambda x, y: 10**(a*x+b)*(y-yth)**(c*x+d) + (e*x+f)*(y-yth)
+
 
 def linear(a,b):
     ''' Linear function ax+b'''
@@ -25,6 +30,17 @@ def temp_surface(base, a, b, c, d, e, f, g):
     ''' Temperture surface'''
     return lambda x, y: ( base + a*x + b*y + c*x**2 + d*y**2 
                           + e*x*y + f*x*y**2 + g*x**2* y )
+
+def pearson3_func(height, skew, loc, scale):
+    return lambda x: height*pearson3.pdf(x, skew, loc, scale)
+
+def two_gaussian(height, x_0, sigma_1, sigma_2):
+    return lambda x: ( oned_gaussian(x, height, x_0, sigma_1)*(x<=x_0).astype(int) 
+                     + oned_gaussian(x, height, x_0, sigma_2)*(x>x_0).astype(int) )
+
+def two_lorentz(height, x_0, sigma_1, sigma_2):
+    return lambda x: ( lorentz(x, height, x_0, sigma_1)*(x<=x_0).astype(int)
+                     + lorentz(x, height, x_0, sigma_2)*(x>x_0).astype(int) )
 
 #def temp_surface_sp(base, a, b, c, d, e, f, g):
 #    ''' Temperture surface'''

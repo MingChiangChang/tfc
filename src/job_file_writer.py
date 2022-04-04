@@ -5,11 +5,11 @@ from typing import ClassVar
 @dataclass
 class Zone():
     ID:              str = "\"15A\""
-    Laser:           str = "LD"
+    Laser:           str = "CO2"
     Power:         float = 15.00
-    Skew:          bool  = False 
+    Skew:           bool = False 
     Power_Skew:    float = 0.00
-    Units:           str = "RAW"
+    Units:           str = "WATTS"
     Dwell:         float = 4228.57
     Track_Spacing: float = 110.00
     Scan:            str = "BI_BT"
@@ -83,12 +83,20 @@ def write_zones(zones: list, f):
 if __name__ == "__main__":
    home = Path.home() 
    path = home / "Desktop" / "TR"
+   xpos = 18.
+   dwell = 352.8
+   BG = 0
+   BASE = 15
 
    f = open(path / "test.job", "w")
    j = Job()
    j.write_file(f)
 
-   zones = [Zone(ID=f"\"{str(i*4+15)}A\"", Power=i*4+15) for i in range(15)]
+   #dwell = 882000/velocity
+   zones = [Zone(ID=f"\"{str(i*4+15)}A\"", Power=i*4+15, Dwell=dwell,
+            Xmin=xpos, Xmax=xpos)
+             for i in range(15)]
+   zones.insert(0, Zone(ID=f"\"{BG}A\"", Power=BG, Dwell=dwell, Xmin=xpos, Xmax=xpos))
    write_zones(zones, f)
 
    f.close()

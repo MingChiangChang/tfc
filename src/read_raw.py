@@ -21,6 +21,19 @@ def load_blue(fp):
     val = val.reshape(X_DIM, Y_DIM)
     return get_interpolation(val, Color.Blue)
 
+def load_background_series(position: str, fps: list):
+    bg_ls = []
+    bg_data = []
+    for fp in fps:
+        _position, current, _ = parse_fn(fp)
+        if is_bg(current) and position == _position:
+            bg_ls.append(fp)
+
+    for bg in tqdm(sorted(bg_ls), desc = f"Loading background at {position}"):
+        bg_data.append(load_blue(bg))
+
+    return bg_data
+
 class Color(Enum):
     Red = 1
     Blue = 2

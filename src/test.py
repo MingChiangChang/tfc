@@ -7,7 +7,7 @@ from preprocess import preprocess_by_frame
 from fitting import fit_gaussian
 home = Path.home()
 
-path = home / "Desktop" / "TR" / "35mm per sec"  
+path = home / "Desktop" / "TR" / "LD" / "35mm per sec"  
 
 bg_path = path / "10mm_10A_015.raw"
 data_path = path / "10mm_55A_015.raw"
@@ -29,7 +29,7 @@ print(temp_fit)
 t = []
 x = []
 for i in range(200):
-    pfit = fit_gaussian(((data-bg)/bg)[int(300+i+temp_fit[1]), 350:1600])
+    pfit, _ = fit_gaussian(((data-bg)/bg)[int(300+i+temp_fit[1]), 350:1600])
     #plt.plot((data-bg)[int(temp_fit[1]) + 395 + i, :], label=str(i))
     print(pfit)
     t.append(pfit[0]) 
