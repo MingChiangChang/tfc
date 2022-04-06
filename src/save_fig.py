@@ -7,8 +7,8 @@ import matplotlib.pyplot as plt
 from read_raw import load_blue
 
 home = Path.home() 
-path = home / "Desktop" / "TR" 
-dir_paths = path.glob("15mm per sec")
+path = home / "Desktop" / "TR" / "co2"
+dir_paths = path.glob("353mm per sec")
 
 for dir_path in dir_paths:
     fp = dir_path.glob("*.raw")

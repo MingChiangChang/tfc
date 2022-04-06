@@ -13,7 +13,7 @@ home = Path.home()
 #rng = {15.: 30, 35.: 30,  75.: 30, 150.: 15, 300.: 8, 55.: 30}
 
 path = home / "Desktop" / "TR" / "co2"
-for j in path.glob("*.json"):
+for j in path.glob("*test.json"):
     with open(j, "r") as f:
         data = json.load(f)
     velo_str = os.path.basename(j)

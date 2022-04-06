@@ -2,6 +2,8 @@ from pathlib import Path
 from dataclasses import dataclass
 from typing import ClassVar
 
+import numpy as np
+
 @dataclass
 class Zone():
     ID:              str = "\"15A\""
@@ -83,20 +85,28 @@ def write_zones(zones: list, f):
 if __name__ == "__main__":
    home = Path.home() 
    path = home / "Desktop" / "TR"
-   xpos = 18.
-   dwell = 352.8
+   dwell_ls = []
+   xpos = [-5. + 2*i for i in range(10) ] 
    BG = 0
    BASE = 15
+   INTERVAL = 2
 
-   f = open(path / "test.job", "w")
-   j = Job()
-   j.write_file(f)
+   dwells = np.linspace(np.log10(250), np.log10(10000), 10)
+   velocity = 88200/(10**dwells)
+   velocity = velocity.astype(int)
+   dwells = 88200/velocity
+   dwells = map(lambda x: round(x, 2), dwells)
+   for idx, dwell in enumerate(dwells):
+       f = open(path / f"{velocity[idx]}mm per sec.job", "w")
+       j = Job()
+       j.write_file(f)
 
-   #dwell = 882000/velocity
-   zones = [Zone(ID=f"\"{str(i*4+15)}A\"", Power=i*4+15, Dwell=dwell,
-            Xmin=xpos, Xmax=xpos)
-             for i in range(15)]
-   zones.insert(0, Zone(ID=f"\"{BG}A\"", Power=BG, Dwell=dwell, Xmin=xpos, Xmax=xpos))
-   write_zones(zones, f)
+       zones = [Zone(ID=f"\"{i*INTERVAL + BASE}W\"", Power = i*INTERVAL + BASE, 
+                Dwell=dwell, Xmin=xpos[idx], Xmax=xpos[idx])
+                 for i in range(30)]
+       zones.insert(0, Zone(ID=f"\"{BG}W\"", Power=BG, Dwell=dwell,
+                            Xmin=xpos[idx], Xmax=xpos[idx]))
+       write_zones(zones, f)
 
-   f.close()
+
+       f.close()

@@ -1,8 +1,12 @@
 from pathlib import Path
 from enum import Enum
+
 from cv2 import imwrite
+from tqdm import tqdm
 import numpy as np
 import matplotlib.pyplot as plt
+
+from util import parse_fn, is_bg
 
 HEADER_LEN = 152
 X_DIM = 1200 
@@ -29,7 +33,7 @@ def load_background_series(position: str, fps: list):
         if is_bg(current) and position == _position:
             bg_ls.append(fp)
 
-    for bg in tqdm(sorted(bg_ls), desc = f"Loading background at {position}"):
+    for bg in sorted(bg_ls):#, desc = f"Loading background at {position}"):
         bg_data.append(load_blue(bg))
 
     return bg_data
