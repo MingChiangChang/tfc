@@ -8,6 +8,9 @@ import matplotlib.pyplot as plt
 from scipy.optimize import leastsq
 from matplotlib.colors import ListedColormap
 from scipy.optimize import leastsq
+import dill
+from sympy.utilities.lambdify import lambdify
+from sympy import Symbol, solve
 
 from util import sort_current
 from error_funcs import temp_surface, twod_surface, temp_surface_sp, new_temp_surface, linear
@@ -21,8 +24,8 @@ from temp_calibration import fit_xy_to_z_surface_with_func
 def quadratic(a, b):
     return lambda x: a*(x-y_th)**2 + b*(x-y_th) # TODO: Can use optimization to find best y_th
 
-def exponential_fit(e, a, b):
-    return lambda x: a*(x-y_th)**e + b*(x-y_th)
+def exponential_fit(e, a):
+    return lambda x: a*(x-y_th)**e #+ b*(x-y_th)
 
 ######################## Constant Definition ############################
 FPS = 40.
@@ -30,10 +33,10 @@ kappa = 1.2*10**-4
 home = Path.home()
 y_th = 0
 fit_surface = fit_xy_to_z_surface_with_func
-surface_func = new_temp_surface 
+surface_func = test_new_temp_surface 
 path = home / "Desktop" /"TR" / "co2"
 
-guess = [1 for _ in range(len(getfullargspec(surface_func).args))]
+guess = [0.01 for _ in range(len(getfullargspec(surface_func).args))]
 #guess = [1., 1., 0.01, 0.01, 1., 1.]
 
 ######################## Melting Points ############################
@@ -44,12 +47,12 @@ pp = np.array([54.6, 60.5])
 # melt = np.array([[15, 61.27669902912587, 1020],
 #                  [75, 83.2238805970102, 1020]])
 melt = np.array([[50, 54.6], [100, 60.5]])
-# si_melt_temp = np.repeat(1020, pp.shape[0])
+# gold_melt_temp = np.repeat(1020, pp.shape[0])
 si_melt_temp = np.repeat(1400, pp.shape[0]) 
 # rng = {15.: 30, 35.: 30,  75.: 30, 150.: 15, 300.: 8, 55.: 30}
 # target = {15.: 28, 35: 16, 75.: 7, 150.: 4, 300.: 2, 55.: 11}
-rng = {9.: 30, 25.: 30, 200.: 10, 50.: 30, 100.: 21, 353.: 9}
-target = {9.: 23, 25.: 9, 50.: 5, 100.: 3, 353.: 2, 200.: 2}
+#rng = {9.: 30, 25.: 30, 200.: 10, 50.: 30, 100.: 21, 353.: 9}
+target = {9.: 23, 25.: 9, 50.: 5, 100.: 3, 353.: 2}#, 200.: 2}
 
 
 
@@ -57,7 +60,7 @@ target = {9.: 23, 25.: 9, 50.: 5, 100.: 3, 353.: 2, 200.: 2}
  
 
 full_d = []
-for j in path.glob("*_test.json"):
+for j in path.glob("*.json"):
     with open(j, "r") as f:
         data = json.load(f)
     velo_str = os.path.basename(j)
@@ -71,7 +74,7 @@ for j in path.glob("*_test.json"):
         full_d.append(i)
 
 result = np.array(full_d)
-result = result[np.logical_and(result[:,2]<0.18, result[:,2]>0.04)]
+result = result[np.logical_and(result[:,2]<0.18, result[:,2]>0.025)]
 pfits ={} 
 
 print(result)
@@ -102,7 +105,7 @@ for i in list(target):
     print("x")
     print(x)
     err_func = lambda p: np.ravel(exponential_fit(*p)(x))-t[:, 0, 1] 
-    pfit, _ = leastsq(err_func, [2., 1., 1.], maxfev=2000)
+    pfit, _ = leastsq(err_func, [2., 1.], maxfev=2000)
     print(pfit)
     pfits[i] = pfit
     xx = np.linspace(np.min(x)-5, np.max(x)+5, 50)
@@ -113,7 +116,7 @@ plt.xlabel("Power (W)")
 plt.ylabel("Projected temperature")
 plt.show()
 
-p = np.array([[i, pfits[i][0], pfits[i][1], pfits[i][2]] for i in pfits])
+p = np.array([[i, pfits[i][0], pfits[i][1]] for i in pfits])
 # p = np.array([[i, pfits[i][0]] for i in pfits])
 print(p)
 fits = []
@@ -137,17 +140,18 @@ plt.plot(x, fit(x))
 plt.title("b in a*(x-x0)^2+b(x-x0)")
 plt.xlabel("current in log")
 plt.show()
-fits.append(r[0])
-err_func = lambda a: linear(*a)(np.log10(p[:,0])) - p[:,3]
-r = leastsq(err_func, x0=[1., 1.])
-fit = linear(*r[0])
-plt.scatter(np.log10(p[:,0]), p[:,3])
-x = np.arange(1, 2.6, 0.1)
-plt.plot(x, fit(x))
-plt.title("c in a*(x-x0)^2+b(x-x0)")
-plt.xlabel("current in log")
-plt.show()
-fits.append(r[0])
+
+#fits.append(r[0])
+#err_func = lambda a: linear(*a)(np.log10(p[:,0])) - p[:,3]
+#r = leastsq(err_func, x0=[1., 1.])
+#fit = linear(*r[0])
+#plt.scatter(np.log10(p[:,0]), p[:,3])
+#x = np.arange(1, 2.6, 0.1)
+#plt.plot(x, fit(x))
+#plt.title("c in a*(x-x0)^2+b(x-x0)")
+#plt.xlabel("current in log")
+#plt.show()
+#fits.append(r[0])
 t = np.array([[i, target[i]/FPS*i]for i in target])
 plt.scatter(np.log10(t[:,0]), t[:,1])
 plt.xlabel("current in log")
@@ -199,7 +203,7 @@ for i in target:
     t = result[result[:,0]==i]
     print(t)
     plt.plot(t[:,1], t[:,2]/kappa[0], marker="o", label="Data")
-    x = np.linspace(np.min(t[:,1])-5, np.max(t[:,1])+5, 50)
+    x = np.linspace(np.min(t[:,1])-1, np.max(t[:,1])+1, 50)
     plt.plot(x, fit_func(np.log10(t[0,0]), x)/kappa[0], label="Fitted")
     plt.title(f"{int(i)}mm per sec")
     plt.xlabel("Power (W)")
@@ -209,6 +213,24 @@ for i in target:
     plt.clf()
     plt.close("all")
 print(kappa)
+
+t = (pfit/kappa).tolist()
+
+############### Storing temperauture and power function ################
+t_func = surface_func(*t)
+
+# with open("t_func.d", "wb") as f:
+#     dill.dump(fit_func, f)
+# print(t)
+# tpeak = Symbol('tpeak', real=True, positive=True)
+# velocity = Symbol('velocity', real=True, positive=True)
+# power = Symbol('power', real=True, positive=True)
+# print("here")
+# p_func = lambdify((tpeak, velocity),
+#                    solve(tpeak-fit_func(velocity, power), power)[1],
+#                    modules = "numpy")
+# with open("p_func.d", 'wb') as f:
+#     dill.dump(p_func, f)
 
 x = np.linspace(np.log10(9), np.log10(380), 20)
 y = np.linspace(20, 110, 10)

@@ -11,7 +11,7 @@ def new_temp_surface(a, b, c, d, e, f, g, h):
     return lambda x, y: (a*x**2+b*x+c+d*np.sqrt(x))*(y-yth)**2 + (e*x**2+f*x+g+h*np.sqrt(x))*(y-yth)
 
 def test_new_temp_surface(a, b, c, d, e, f):
-    return lambda x, y: 10**(a*x+b)*(y-yth)**(c*x+d) + (e*x+f)*(y-yth)
+    return lambda x, y: (a*x**2+b*x+c)*(y-yth)**(d*x**2+e*x+f) #+ (e*x+f)*(y-yth)
 
 
 def linear(a,b):
