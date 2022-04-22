@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 
 from util import parse_fn, is_bg
 
-HEADER_LEN = 152
+HEADER_LEN = 152 
 X_DIM = 1200 
 Y_DIM = 1920 
 BLUE_FILTER = np.tile(np.vstack((np.zeros(Y_DIM), np.tile([1,0], Y_DIM//2))),
@@ -223,38 +223,53 @@ if __name__ == "__main__":
     home = Path.home()
     path = home / 'Desktop' / 'TR' / "35mm per sec" / "10mm_79A_020.raw" 
     path = home / "Downloads" / "img_+00_+00.post.raw"
+    path = home / "Desktop" / "09800us_029.00W"
 
-    with open(path, 'br') as f:
-        data = f.read()
 
-    #d = []
-    #
-    #for i in data:
-    #    d.append(int(str(i)))
+    bg = path.glob("*.raw")
+    bgs = np.zeros((6, 1200, 1920))
+    for idx, b in enumerate(bg):
+        print(idx)
+        bgs[idx] = load_blue(b)
+        
+    avg_bg = np.mean(bgs, axis=0)
+    single_bg = bgs[1] 
 
-    val = read_uint12(data[152:]) # TODO: Check why this has to be like this..
-    val = val.reshape(1200, 1920)
-    f = np.zeros((1200, 1920, 3)) 
-    
-    d = get_interpolation(val, Color.Blue)
-    r = get_interpolation(val, Color.Red)
-    g = get_interpolation(val, Color.Green)
-    fig, ax = plt.subplots(2,2)
-    ax[0, 0].imshow(val)
-    ax[0, 0].set_title("Origin raw")
-    ax[0, 1].imshow(d)
-    ax[0, 1].set_title("blue channel")
-    ax[1, 0].imshow(r)
-    ax[1, 0].set_title("red channel")
-    ax[1, 1].imshow(g)
-    ax[1, 1].set_title("green channel")
-    fig.suptitle("MURI-SARA/Thermoreflectance/2022.03 Velocity Scans/35mm per sec/10mm_79A_020.raw")
+    fig, ax = plt.subplots(2)
+    ax[0].plot(avg_bg[600,:-5])
+    ax[1].plot(bgs[1, 600,:-5])
     plt.show()
+    #with open(path, 'br') as f:
+    #    data = f.read()
 
-    f[:,:,0] = r
-    f[:,:,1] = g
-    f[:,:,2] = d
-    np.save("10mm_79A_20.npy", f)
-    f *= (256/4096)
-    print(f.shape)
-    imwrite("/Users/ming/Desktop/test.bmp", f)
+    ##d = []
+    ##
+    ##for i in data:
+    ##    d.append(int(str(i)))
+
+    #val = read_uint12(data[HEADER_LEN:]) # TODO: Check why this has to be like this..
+    #val = val.reshape(1200, 1920)
+    #f = np.zeros((1200, 1920, 3)) 
+    #
+    #d = get_interpolation(val, Color.Blue)
+    #r = get_interpolation(val, Color.Red)
+    #g = get_interpolation(val, Color.Green)
+    #fig, ax = plt.subplots(2,2)
+    #ax[0, 0].imshow(val)
+    #ax[0, 0].set_title("Origin raw")
+    #ax[0, 1].imshow(d)
+    #ax[0, 1].set_title("blue channel")
+    #ax[1, 0].imshow(r)
+    #ax[1, 0].set_title("red channel")
+    #ax[1, 1].imshow(g)
+    #ax[1, 1].set_title("green channel")
+    #fig.suptitle("MURI-SARA/Thermoreflectance/2022.03 Velocity Scans/35mm per sec/10mm_79A_020.raw")
+    #plt.show()
+
+    #f[:,:,0] = r
+    #f[:,:,1] = g
+    #f[:,:,2] = d
+    #np.save("10mm_79A_20.npy", f)
+    #f *= (256/4096)
+    #print(f.shape)
+    #imwrite("/Users/ming/Desktop/test.bmp", f)

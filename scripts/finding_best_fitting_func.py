@@ -1,4 +1,6 @@
 from pathlib import Path
+import sys
+sys.path.insert(0, '../src')
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -17,20 +19,21 @@ if __name__ == "__main__":
 
     home = Path.home()
 
-    path = home / "Desktop" / "TR" / "co2"
+    path = home / "Desktop" / "TR" / "chess"
+    path = Path("/Volumes/Samsung_T5/TR_0412/13mm per sec")
 
-    data_path = path / "9mm per sec" / "16mm_43A_011.raw"
-    bg_path = path / "9mm per sec" / "16mm_0A_011.raw"
+    data_path = path / "19mm_41W_010.raw"
+    bg_path = path / "19mm_0W_010.raw"
 
     data = load_blue(data_path)
     bg = load_blue(bg_path)
 
-    #fig, ax = plt.subplots(3)
-    #ax[0].imshow(data)
-    #ax[1].imshow(bg)
-    #ax[2].imshow(data-bg)    
-    plt.imshow(data-bg)
-    sc = plt.colorbar()
+    fig, ax = plt.subplots(3)
+    ax[0].imshow(data)
+    ax[1].imshow(bg)
+    ax[2].imshow(data-bg)    
+    #plt.imshow(data-bg)
+    #sc = plt.colorbar()
     plt.show()
 
     pfit =  preprocess_by_frame(data, bg, (400, 900), (500, 1900))
@@ -46,8 +49,8 @@ if __name__ == "__main__":
     r = (data-bg)/bg
     center = 400 + int(pfit[1])
     d = np.mean(r[center-20:center+20, ymin:ymax], axis=0)
-    oned_fits, _ = fit_two_lorentz(d)
-    f =two_lorentz(*oned_fits)
+    oned_fits, _ = fit_gaussian(d)
+    f =oned_gaussian_func(*oned_fits)
     fig, ax = plt.subplots(2, figsize=((6, 6)))
     ax[0].plot(d)
     ax[0].plot(f(np.arange(ymax-ymin)))

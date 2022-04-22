@@ -7,16 +7,29 @@ from scipy.stats import pearson3
 
 yth = 0 
 
+def bi2o3_temp_surface(b,c,d,f):
+    return lambda x, y: (b*x**(-1)+c)*(y-yth)**(d*x**(1/2)+f) 
+
 def new_temp_surface(a, b, c, d, e, f, g, h):
     return lambda x, y: (a*x**2+b*x+c+d*np.sqrt(x))*(y-yth)**2 + (e*x**2+f*x+g+h*np.sqrt(x))*(y-yth)
 
-def test_new_temp_surface(a, b, c, d, e, f):
-    return lambda x, y: (a*x**2+b*x+c)*(y-yth)**(d*x**2+e*x+f) #+ (e*x+f)*(y-yth)
+def test_new_temp_surface(b, c, d, e, f):
+    # return lambda x, y: (a*x**2+b*x+c)*(y-yth)**(d*x**2+e*x+f) #+ (e*x+f)*(y-yth)
+    return lambda x, y: (b*x+c)*(y-yth)**(d*x**2+e*x+f)
 
+def inverse_temp_surface(b,c,d,e,f):
+    return lambda dw, t: (t/(b*dw+c))**(1/(d*dw**2 + e*dw +f))
+
+def deg_temp_surface(a, b, c, d, e, f):
+    return lambda x, y: (a*x + b)*(np.cos((y-50)*np.pi/180))**(c*x+d) + (e*x+f)*(np.cos((y-50)*np.pi/180))
 
 def linear(a,b):
     ''' Linear function ax+b'''
     return lambda x: a*x+b
+
+def twod_plane(base, a, b):
+    ''' 2d plane function'''
+    return lambda x, y: base + a*x + b*y
 
 def twod_surface(base, a, b, c, d, e):
     ''' 2d quadratic surface '''
@@ -25,6 +38,9 @@ def twod_surface(base, a, b, c, d, e):
 def cubic_surface(base, a, b, c, d, e, f, g):
     ''' 2d cubic surface without cross terms'''
     return lambda x, y: base + a*x + b*y + c*x**2 + d*y**2 + e*x*y + f*x**4 + g*y**4
+
+def width_surface(base, a, b, c):
+    return lambda x, y: base + a*x + b*y + c*y**2
 
 def temp_surface(base, a, b, c, d, e, f, g):
     ''' Temperture surface'''

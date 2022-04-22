@@ -1,3 +1,8 @@
+'''
+Fitting function for different function form
+Could use partialfunc but got lazy..
+'''
+
 import matplotlib.pyplot as plt
 import numpy as np
 from scipy.optimize import leastsq, least_squares
@@ -63,9 +68,9 @@ def fit_two_lorentz(data):
     err = lambda p: np.ravel(two_lorentz(*p)(x)) - data
     #pfit, _, _, _, _ = leastsq(err, [0.1, x.shape[0]//2, 200, 200],
     #         full_output=1)
-    pfit = least_squares(err, [0.1, x.shape[0]//2, 500, 300],
-                      bounds = ([0.,  x.shape[0]//2 - 300,    0.,    0.],
-                                [0.4, x.shape[0]//2 + 300, 1000., 1000.]))
+    pfit = least_squares(err, [0.1, 150, 250, 250],
+                      bounds = ([0.,  50,  50.,  50.],
+                                [0.4, 250, 300., 300.]))
     s_sq = ((two_lorentz(*pfit.x)(x)-data)**2).sum()/(x.shape[0]-len(pfit.x))
     pcov = pfit.jac.T @ pfit.jac
     pcov = pcov * s_sq

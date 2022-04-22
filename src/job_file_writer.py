@@ -86,26 +86,39 @@ if __name__ == "__main__":
    home = Path.home() 
    path = home / "Desktop" / "TR"
    dwell_ls = []
-   xpos = [-5. + 2*i for i in range(10) ] 
-   BG = 0
-   BASE = 15
-   INTERVAL = 2
+   xpos = [ 11 + i for i in range(11) ] 
+   BG = 0 
+   BASE = 29 
+   INTERVAL = 2 
 
    dwells = np.linspace(np.log10(250), np.log10(10000), 10)
    velocity = 88200/(10**dwells)
    velocity = velocity.astype(int)
+   velocity[-1] = 9
+   velocity = np.append(velocity, 190)
    dwells = 88200/velocity
-   dwells = map(lambda x: round(x, 2), dwells)
+   dwells = list(map(lambda x: round(x, 2), dwells))
    for idx, dwell in enumerate(dwells):
        f = open(path / f"{velocity[idx]}mm per sec.job", "w")
        j = Job()
        j.write_file(f)
-
-       zones = [Zone(ID=f"\"{i*INTERVAL + BASE}W\"", Power = i*INTERVAL + BASE, 
-                Dwell=dwell, Xmin=xpos[idx], Xmax=xpos[idx])
-                 for i in range(30)]
-       zones.insert(0, Zone(ID=f"\"{BG}W\"", Power=BG, Dwell=dwell,
-                            Xmin=xpos[idx], Xmax=xpos[idx]))
+       y_interval = velocity[idx] * 0.025 * 30/2 
+       if y_interval < 40:
+           zones = [Zone(ID=f"\"{i*INTERVAL + BASE}W\"", Power = i*INTERVAL + BASE, 
+                    Dwell=dwell, Xmin=xpos[idx], Xmax=xpos[idx], 
+                    Ymin=-y_interval, Ymax=y_interval)
+                    for i in range(18)]
+           zones.insert(0, Zone(ID=f"\"{BG}W\"", Power=BG, Dwell=dwell,
+                                Xmin=xpos[idx], Xmax=xpos[idx],
+                                Ymin=-y_interval, Ymax=y_interval))
+       else:
+           zones = [Zone(ID=f"\"{i*INTERVAL + BASE}W\"", Power = i*INTERVAL + BASE,
+                    Dwell=dwell, Xmin=xpos[idx], Xmax=xpos[idx],
+                    Ymin=-40, Ymax=40)
+                    for i in range(18)]
+           zones.insert(0, Zone(ID=f"\"{BG}W\"", Power=BG, Dwell=dwell,
+                                Xmin=xpos[idx], Xmax=xpos[idx],
+                                Ymin=-40, Ymax=40))
        write_zones(zones, f)
 
 

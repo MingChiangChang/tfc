@@ -2,7 +2,7 @@ import os
 
 from tqdm import tqdm
 
-BG_CURRENT = "0A"
+BG_CURRENT = "0W"
 
 def is_bg(current: str):
     return current == BG_CURRENT

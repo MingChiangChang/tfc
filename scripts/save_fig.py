@@ -1,5 +1,7 @@
 from pathlib import Path
+import sys
 import os
+sys.path.insert(0, '../src')
 
 from tqdm import tqdm
 import matplotlib.pyplot as plt
@@ -7,8 +9,8 @@ import matplotlib.pyplot as plt
 from read_raw import load_blue
 
 home = Path.home() 
-path = home / "Desktop" / "TR" / "co2"
-dir_paths = path.glob("353mm per sec")
+path = home / "Desktop" / "TR" / "chess"
+dir_paths = path.glob("*mm per sec")
 
 for dir_path in dir_paths:
     fp = dir_path.glob("*.raw")
