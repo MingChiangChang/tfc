@@ -46,9 +46,19 @@ def temp_surface(base, a, b, c, d, e, f, g):
     ''' Temperture surface'''
     return lambda x, y: ( base + a*x + b*y + c*x**2 + d*y**2 
                           + e*x*y + f*x*y**2 + g*x**2* y )
+def exponential_dist(x, height, x_0, e):
+    return height * (np.exp(-e*(x-x_0)))
 
 def pearson3_func(height, skew, loc, scale):
     return lambda x: height*pearson3.pdf(x, skew, loc, scale)
+
+def two_exp(height, x_0, e, f):
+    return lambda x: ( exponential_dist(x, height, x_0, e)*(x<=x_0).astype(int)
+                     + exponential_dist(x, height, x_0, )*(x>x_0).astype(int) )
+
+def two_reciprocal(height, x_0, e, f):
+    return lambda x: height*( e/np.abs(x-x_0)*(x<=x_0).astype(int)
+                             + f/np.abs(x-x_0)*(x>x_0).astype(int) )
 
 def two_gaussian(height, x_0, sigma_1, sigma_2):
     return lambda x: ( oned_gaussian(x, height, x_0, sigma_1)*(x<=x_0).astype(int) 
@@ -57,6 +67,13 @@ def two_gaussian(height, x_0, sigma_1, sigma_2):
 def two_lorentz(height, x_0, sigma_1, sigma_2):
     return lambda x: ( lorentz(x, height, x_0, sigma_1)*(x<=x_0).astype(int)
                      + lorentz(x, height, x_0, sigma_2)*(x>x_0).astype(int) )
+
+def two_lorentz_gradient(height, x_0, sigma_1, sigma_2):
+    return lambda x: ( lorentz_gradient(x, height, x_0, sigma_1)*(x<=x_0).astype(int)
+                     + lorentz_gradient(x, height, x_0, sigma_2)*(x>x_0).astype(int) )
+
+def lorentz_gradient(x, height, x_0, sigma):
+    return - 2 * (x-x_0)/sigma**2 * lorentz(x, height, x_0, sigma)**2 / height
 
 #def temp_surface_sp(base, a, b, c, d, e, f, g):
 #    ''' Temperture surface'''

@@ -31,7 +31,7 @@ def get_velo_power_given_temp_quench(temp, quench):
         p = p_surf(np.log10(log_velo), temp) 
         pred_quench = q_surf(log_velo, p) 
         return pred_quench - quench
-
+    print(10**q_surf(np.log10(88200/5000), 40))
     velo_fit, _ = leastsq(t, [2.])
     power = p_surf(velo_fit[0], temp)
     return 10**velo_fit[0], power
@@ -40,3 +40,4 @@ def get_velo_power_given_temp_quench(temp, quench):
 if __name__ == '__main__':
     for i in np.linspace(5.5, 6.5, 10):
         print(i, get_velo_power_given_temp_quench(1414, i))
+
