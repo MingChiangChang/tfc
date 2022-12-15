@@ -128,7 +128,7 @@ class collection(object):
             jpg: "jpg" or 3
             png: "png" or 4
         """
-        image_info = self.client['camera'].set_ZOOMCAM_SAVE_ALL(self.msg_id, file_format, path)
+        image_info = self.clients['camera'].set_ZOOCAM_SAVE_FRAME(self.msg_id, 1, file_format, path)
         return [image_info]
 
     def get_images(self):
@@ -280,7 +280,8 @@ class collection(object):
                     sys.exit(10)
                 
         #Get images
-        if save_local:
+        if self.args.savelocal:
+            print(f"Saving to {self.args.path}")
             self.save_images(self.args.file_format, self.args.path)    
         else:
             self.images = self.get_images()
@@ -353,7 +354,7 @@ def parse():
     parser = argparse.ArgumentParser()
     parser.add_argument('-pt', '--plot',                   help="Plot on screen every frame taken", action='store_true')
     parser.add_argument('-pre', '--prefix',    type=str,   help="Prefix directory for storing data", default = "")
-    parser.add_argument('-a', '--address',                 help="Address of the device", default="CHESS",  choices=['Analysis', 'LSA', 'Local', "CHESS"])
+    parser.add_argument('-a', '--address',                 help="Address of the device", default="LSA",  choices=['Analysis', 'LSA', 'Local', "CHESS"])
     parser.add_argument('-r', '--ringsize',    type=int,   help="Ring size", default=50)
     parser.add_argument('-p', '--power',       type=float, help="Anneal power", default=0.)
     parser.add_argument('-d', '--dwell',       type=float, help="Dwell time in mus", default=10000.)
@@ -366,10 +367,10 @@ def parse():
     parser.add_argument('-fmax', '--framemax', type=int,   help="Upper bound of frame (set to -1 to print all)", default=-1)
     parser.add_argument('-n', '--nruns',       type=int,   help="Number of runs of a stripe", default=1)
     parser.add_argument('-o', '--offset',      type=int,   help="Offset for the index of stripe", default=0)
+
     parser.add_argument('-sl', '--savelocal', type=bool, default=False, help="Save images locally on Zoocam computer")
-    parser.add_argument('-path'. '--path', type=str, default=None, help="Path for saving files")
+    parser.add_argument('-path', '--path', type=str, default=None, help="Path for saving files")
     parser.add_argument('-ff', '--file_format', type=str, default="raw", help="File format of saved images")
-    parser.add
 
     args = parser.parse_args()
     return args
