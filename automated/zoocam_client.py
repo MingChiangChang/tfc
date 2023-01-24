@@ -926,6 +926,11 @@ class ClientZOOCAMProtocol(ClientStructProtocol):
         If file_format = None, default will be selected (0)
         If path = None, an empty path will be sent
         frame_id will be ignored
+        2022-12-09 00:16:53,098 - ClientZOOCAM - INFO - Sending 12:101:0:0:268:4220570854
+        2022-12-09 00:16:53,098 - ClientZOOCAM - DEBUG - Sending b'0000000c0000006500000000000000000000010cfb90cce6'
+        2022-12-09 00:16:53,752 - ClientZOOCAM - INFO - Received 12:101:0:2:0:4220570854
+        2022-12-09 00:16:53,752 - ClientZOOCAM - DEBUG - Received b'0000000c00000065000000000000000200000000fb90cce6'
+        2022-12-09 00:16:53,752 - ClientZOOCAM - WARNING - RC value returned non-zero 12, 2:0
         """
         msg = [12, msg_id, 0, 0, 0]
         if self.crc:
@@ -956,7 +961,7 @@ class ClientZOOCAMProtocol(ClientStructProtocol):
         msg_recv = self.comm_recv_struct(msg)
         if not self.check_msgid(msg_id, msg_recv): return
         if int(msg_recv[3]) != 0:
-            self.logger.error("Failed to save frame")
+            self.logger.error("Failed to save all frames")
         return msg_recv[3]
     #Block dealing with ZOOCAM_SAVE_ALL********************************************
 

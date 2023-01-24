@@ -1,1 +1,11 @@
-python ThermalReflectance.py -n 15 -d 1960.0 -p 0.0 -pmin -15 0  -pmax -15 5 -pre chess_2022_45 -sl True  -ff bmp -r 30 -path "C:\\Users\\LSA\\Desktop\\12082022_test\\"
+python ThermalReflectance.py -n 5 -d 30120.0 -p 0. -pmin 0 -8  -pmax 0 8 -pre x=0_10mm_per_sec -r 20
+python ThermalReflectance.py -n 1 -d 30120.0 -p 45. -pmin 0 -8  -pmax 0 8 -pre x=0_10mm_per_sec -r 20
+python ThermalReflectance.py -n 1 -d 30120.0 -p 50. -pmin 0 -8  -pmax 0 8 -pre x=0_10mm_per_sec -r 20
+python ThermalReflectance.py -n 1 -d 30120.0 -p 50. -pmin 0 -8  -pmax 0 8 -pre x=0_10mm_per_sec -r 20
+python ThermalReflectance.py -n 1 -d 30120.0 -p 55. -pmin 0 -8  -pmax 0 8 -pre x=0_10mm_per_sec -r 20
+python ThermalReflectance.py -n 1 -d 30120.0 -p 60. -pmin 0 -8  -pmax 0 8 -pre x=0_10mm_per_sec -r 20
+python ThermalReflectance.py -n 1 -d 30120.0 -p 65. -pmin 0 -8  -pmax 0 8 -pre x=0_10mm_per_sec -r 20
+python ThermalReflectance.py -n 1 -d 30120.0 -p 70. -pmin 0 -8  -pmax 0 8 -pre x=0_10mm_per_sec -r 20
+python ThermalReflectance.py -n 1 -d 30120.0 -p 75. -pmin 0 -8  -pmax 0 8 -pre x=0_10mm_per_sec -r 20
+python ThermalReflectance.py -n 1 -d 30120.0 -p 80. -pmin 0 -8  -pmax 0 8 -pre x=0_10mm_per_sec -r 20
+python ThermalReflectance.py -n 1 -d 30120.0 -p 85. -pmin 0 -8  -pmax 0 8 -pre x=0_10mm_per_sec -r 20

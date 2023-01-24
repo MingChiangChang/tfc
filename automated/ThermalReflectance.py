@@ -7,6 +7,7 @@ import argparse
 import os
 import logging
 import logging.config
+import numpy as np
 
 """
 Command-line tool for thermal reflectance data collection
@@ -52,9 +53,9 @@ class collection(object):
         recv = self.clients["camera"].set_ZOOCAM_BURST_ABORT(self.msg_id)
         #Set up burst
         recv, trigger_dict = self.clients["camera"].get_ZOOCAM_GET_TRIGGER_MODE(self.msg_id)
-        trigger_dict["ext_slope"] = 2
+        trigger_dict["ext_slope"] = 1
         trigger_dict["mode"] = 2
-        trigger_dict["frames"] = 2 
+        trigger_dict["frames"] = 20 
         recv = self.clients["camera"].set_ZOOCAM_SET_TRIGGER_MODE(self.msg_id,
                                                                   trigger_mode=2,
                                                              trigger_dict=trigger_dict)
@@ -92,6 +93,8 @@ class collection(object):
             recv["Xmax"]  = self.args.xrange[xstripe]
         print("Scanning at x position", recv["Xmin"]) 
 
+        recv["Units"] = 0 
+        recv["Laser"] = 1
         recs = [recv]
 
         #Set job parameters
@@ -135,15 +138,20 @@ class collection(object):
         """
         Count the collected images, and transfer them
         """
-        #n_images = self.clients["camera"].get_ZOOCAM_RING_GET_FRAME_CNT(self.msg_id)
+        n_images = self.clients["camera"].get_ZOOCAM_RING_GET_FRAME_CNT(self.msg_id)
         #jprint("Collecting number of images", n_images)
         image_info = self.clients['camera'].get_ZOOCAM_GET_IMAGE_INFO(self.msg_id)
-        image_info = self.clients['camera'].get_ZOOCAM_GET_IMAGE_DATA(self.msg_id, image_info, get_raw = False,  plot = False)
-        #for i_image in range(n_images):
-        #    #recv = self.clients["camera"].get_ZOOCAM_RING_IMAGE_N_DATA(self.msg_id, i_image)
-        #    images.append(recv)
-        #    print("Image received index", i_image)
-        return [image_info]
+        #image_info = self.clients['camera'].get_ZOOCAM_GET_IMAGE_DATA(self.msg_id, image_info, get_raw = False,  plot = False)
+        print("###################")
+        print(n_images, len(image_info))
+        print("###################")
+        images = []
+        for i_image in range(n_images):
+            image_info = self.clients['camera'].get_ZOOCAM_GET_IMAGE_INFO(self.msg_id, frame_id=i_image)
+            recv = self.clients['camera'].get_ZOOCAM_GET_IMAGE_DATA(self.msg_id, image_info, frame_id=i_image, get_raw = False, plot = False)
+            images.append(recv)
+            print("Image received index", i_image)
+        return images
     
     def set_led(self):
         """
@@ -221,21 +229,25 @@ class collection(object):
             end_index = len(self.images)
         else:
             end_index = min(self.args.framemax, len(self.images))
-
+        print("##########")
+        print(start_index, end_index)
+        print("#############")
         for i in range(start_index, end_index):
-            #image = self.images[i]["img_raw"]
-            fn_img = fn_run
-            #fn = '_'.join((fn_run, fn_led, fn_power, fn_img))
-            #fn = '.'.join((fn, fn_suffix))
-            fn = os.path.join(dn, fn_img)
+            image = self.images[i]["img_raw"]
+            fn_img = "Frame-" + str(i).zfill(4)
+            fn = '_'.join((fn_run, fn_img))
+            # fn = '.'.join((fn, fn_suffix))
+            fn = os.path.join(dn, fn)
             fn = os.path.join(prefix, fn)
+            #fn = os.path.join(dn, fn_img)
+            #fn = os.path.join(prefix, fn)
             print("Writing image to", fn)
             dirname = os.path.dirname(fn)
             if not os.path.exists(dirname):
                 os.makedirs(dirname)
-            #with open(fn + '.raw', "bw") as f:
-            #    f.write(image)
-            self.clients["camera"].write_raw_image(fn + '.raw', self.images[i])
+            with open(fn + '.raw', "bw") as f:
+                f.write(image)
+            #self.clients["camera"].write_raw_image(fn + '.raw', self.images[i])
             #image.save(fn, format="png")
 
     def run(self, power = None, save_local = False,
@@ -287,6 +299,9 @@ class collection(object):
             self.images = self.get_images()
             #Plot images
             self.plot_image(self.images)
+            print("###############")
+            print(np.array(self.images).shape)
+            print("###################")
             #Write files
             if power is None:
                 self.write_file()
@@ -354,7 +369,7 @@ def parse():
     parser = argparse.ArgumentParser()
     parser.add_argument('-pt', '--plot',                   help="Plot on screen every frame taken", action='store_true')
     parser.add_argument('-pre', '--prefix',    type=str,   help="Prefix directory for storing data", default = "")
-    parser.add_argument('-a', '--address',                 help="Address of the device", default="LSA",  choices=['Analysis', 'LSA', 'Local', "CHESS"])
+    parser.add_argument('-a', '--address',                 help="Address of the device", default="Analysis",  choices=['Analysis', 'LSA', 'Local', "CHESS"])
     parser.add_argument('-r', '--ringsize',    type=int,   help="Ring size", default=50)
     parser.add_argument('-p', '--power',       type=float, help="Anneal power", default=0.)
     parser.add_argument('-d', '--dwell',       type=float, help="Dwell time in mus", default=10000.)
