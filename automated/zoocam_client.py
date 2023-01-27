@@ -30,7 +30,7 @@ class ClientZOOCAMProtocol(ClientStructProtocol):
         self.logger = logging.getLogger("ClientZOOCAM")
         self.rotate = None
         if address is None:
-            address = self.addresses["Analysis"] 
+            address = self.addresses["CHESS"] 
         if port is None:
             port = "camera" 
         self.success = self.autoconnect(connect, address, port)
@@ -1425,7 +1425,7 @@ def test_all_functions():
     #address = "Local"
     #address = "CHESS"
     #address = "128.253.129.71"
-    address =  "128.84.183.184"
+    address =  "128.84.183.167"
     #address =  "128.84.183.3" #2022 spring camera computer
     camera_client = ClientZOOCAMProtocol(connect = True, address = address)
     #lasgo_client = ClientLasGoProtocol_Struct(connect = True, address = address)

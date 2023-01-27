@@ -55,7 +55,7 @@ class collection(object):
         recv, trigger_dict = self.clients["camera"].get_ZOOCAM_GET_TRIGGER_MODE(self.msg_id)
         trigger_dict["ext_slope"] = 1
         trigger_dict["mode"] = 2
-        trigger_dict["frames"] = 20 
+        trigger_dict["frames"] = self.args.frame # Frame pre trigger 
         recv = self.clients["camera"].set_ZOOCAM_SET_TRIGGER_MODE(self.msg_id,
                                                                   trigger_mode=2,
                                                              trigger_dict=trigger_dict)
@@ -93,8 +93,8 @@ class collection(object):
             recv["Xmax"]  = self.args.xrange[xstripe]
         print("Scanning at x position", recv["Xmin"]) 
 
-        recv["Units"] = 0 
-        recv["Laser"] = 1
+        recv["Units"] = 1 
+        recv["Laser"] = 0 
         recs = [recv]
 
         #Set job parameters
@@ -369,7 +369,7 @@ def parse():
     parser = argparse.ArgumentParser()
     parser.add_argument('-pt', '--plot',                   help="Plot on screen every frame taken", action='store_true')
     parser.add_argument('-pre', '--prefix',    type=str,   help="Prefix directory for storing data", default = "")
-    parser.add_argument('-a', '--address',                 help="Address of the device", default="Analysis",  choices=['Analysis', 'LSA', 'Local', "CHESS"])
+    parser.add_argument('-a', '--address',                 help="Address of the device", default="CHESS",  choices=['Analysis', 'LSA', 'Local', "CHESS"])
     parser.add_argument('-r', '--ringsize',    type=int,   help="Ring size", default=50)
     parser.add_argument('-p', '--power',       type=float, help="Anneal power", default=0.)
     parser.add_argument('-d', '--dwell',       type=float, help="Dwell time in mus", default=10000.)
@@ -380,6 +380,7 @@ def parse():
     parser.add_argument('-m',    '--scanmode', type=str,   choices=['r', 's'], default = "s", help="Mode of operation along x: (r) range, (s) stationary")
     parser.add_argument('-fmin', '--framemin', type=int,   help="Lower bound of frame", default=0)
     parser.add_argument('-fmax', '--framemax', type=int,   help="Upper bound of frame (set to -1 to print all)", default=-1)
+    parser.add_argument('-f', '--frame', type=int, help="Frames per trigger.", default=30)
     parser.add_argument('-n', '--nruns',       type=int,   help="Number of runs of a stripe", default=1)
     parser.add_argument('-o', '--offset',      type=int,   help="Offset for the index of stripe", default=0)
 

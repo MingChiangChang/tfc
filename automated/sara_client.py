@@ -85,7 +85,8 @@ class ClientSocket:
         self.ports["spec"]       = 1920 #983
         
         self.addresses = {}
-        self.addresses["CHESS"] = "128.84.183.184"
+        #self.addresses["CHESS"] = "128.84.183.184"
+        self.addresses["CHESS"] = "128.84.183.167"
         self.addresses["LSA"] = "128.253.129.74"
         self.addresses["Analysis"] = "128.253.129.71"
         self.addresses["Local"] = socket.gethostname()
