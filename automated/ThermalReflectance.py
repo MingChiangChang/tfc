@@ -134,24 +134,63 @@ class collection(object):
         image_info = self.clients['camera'].set_ZOOCAM_SAVE_FRAME(self.msg_id, 1, file_format, path)
         return [image_info]
 
-    def get_images(self):
+
+    def get_header(self, image_info, camera_info):
+        data_dict = {}
+        data_list = []
+        data_dict['magic'] = 1249612495 ;data_list.append(data_dict['magic'])
+        data_dict['header_size'] = 152; data_list.append(data_dict['header_size'])
+        data_dict['major_version'] = 1; data_list.append(data_dict['major_version'])
+        data_dict['minor_version'] = 0; data_list.append(data_dict['minor_version'])
+        data_dict['exposure'] = image_info["exposure"]; data_list.append(data_dict['exposure'])
+        data_dict['master_gain'] = image_info["master_gain"]; data_list.append(data_dict['master_gain'])
+        data_dict['image_time'] = image_info["image_time"]; data_list.append(data_dict['image_time'])
+        data_dict['camera_time'] = image_info["camera_time"]; data_list.append(data_dict['camera_time'])
+        data_dict["year"] = time.localtime(image_info['image_time'])[0]; data_list.append(data_dict["year" ])
+        data_dict["month"] = time.localtime(image_info['image_time'])[1]; data_list.append(data_dict["month"])
+        data_dict["day"] = time.localtime(image_info['image_time'])[2]; data_list.append(data_dict["day"])
+        data_dict["hour"] = time.localtime(image_info['image_time'])[3]; data_list.append(data_dict["hour"])
+        data_dict["min"] = time.localtime(image_info['image_time'])[4]; data_list.append(data_dict["min"])
+        data_dict["sec"] = time.localtime(image_info['image_time'])[5]; data_list.append(data_dict["sec"])
+        data_dict["msec" ] = 0; data_list.append(data_dict["msec"])
+        data_dict['model'] = camera_info["model"].encode('utf-8') + b'\x00'; data_list.append(data_dict['model'])
+        data_dict['serial'] = camera_info["serial"].encode('utf-8') + b'\x00'; data_list.append(data_dict['serial'])
+        data_dict['type'] = image_info["type"]; data_list.append(data_dict['type'])
+        data_dict['color_correction'] = image_info["color_correction"]; data_list.append(data_dict['color_correction'])
+        data_dict['width'] = image_info["width"]; data_list.append(data_dict['width'])
+        data_dict['height'] = image_info["height"]; data_list.append(data_dict['height'])
+        data_dict['bit_depth'] = 12; data_list.append(data_dict['bit_depth'])
+        data_dict['pixel_bytes'] = 2; data_list.append(data_dict['pixel_bytes'])
+        data_dict['image_bytes'] = len(image_info["img_raw"]); data_list.append(data_dict['image_bytes'])
+        data_dict['pixel_width'] = camera_info['pixel_width']; data_list.append(data_dict['pixel_width'])
+        data_dict['pixel_height'] = camera_info['pixel_height']; data_list.append(data_dict['pixel_height'])
+        s_struct_img, packer_img = self.clients["camera"].HEAD_ZOOCAM_RAW_IMAGE_DATA_structure_format()
+        packed_data, values = self.clients["camera"].pack_data(packer_img, data_list)
+        return packed_data
+
+
+    def get_headers_and_images(self):
         """
         Count the collected images, and transfer them
         """
         n_images = self.clients["camera"].get_ZOOCAM_RING_GET_FRAME_CNT(self.msg_id)
-        #jprint("Collecting number of images", n_images)
+                #jprint("Collecting number of images", n_images)
         image_info = self.clients['camera'].get_ZOOCAM_GET_IMAGE_INFO(self.msg_id)
+        camera_info = self.clients["camera"].get_ZOOCAM_GET_CAMERA_INFO(self.msg_id)
         #image_info = self.clients['camera'].get_ZOOCAM_GET_IMAGE_DATA(self.msg_id, image_info, get_raw = False,  plot = False)
         print("###################")
         print(n_images, len(image_info))
         print("###################")
         images = []
+        headers = []
         for i_image in range(n_images):
             image_info = self.clients['camera'].get_ZOOCAM_GET_IMAGE_INFO(self.msg_id, frame_id=i_image)
             recv = self.clients['camera'].get_ZOOCAM_GET_IMAGE_DATA(self.msg_id, image_info, frame_id=i_image, get_raw = False, plot = False)
+            header = self.get_header(recv, camera_info)
+            headers.append(header)
             images.append(recv)
             print("Image received index", i_image)
-        return images
+        return headers, images
     
     def set_led(self):
         """
@@ -234,6 +273,7 @@ class collection(object):
         print("#############")
         for i in range(start_index, end_index):
             image = self.images[i]["img_raw"]
+            header = self.headers[i]
             fn_img = "Frame-" + str(i).zfill(4)
             fn = '_'.join((fn_run, fn_img))
             # fn = '.'.join((fn, fn_suffix))
@@ -246,7 +286,7 @@ class collection(object):
             if not os.path.exists(dirname):
                 os.makedirs(dirname)
             with open(fn + '.raw', "bw") as f:
-                f.write(image)
+                f.write(header + image)
             #self.clients["camera"].write_raw_image(fn + '.raw', self.images[i])
             #image.save(fn, format="png")
 
@@ -296,7 +336,7 @@ class collection(object):
             print(f"Saving to {self.args.path}")
             self.save_images(self.args.file_format, self.args.path)    
         else:
-            self.images = self.get_images()
+            self.headers, self.images = self.get_headers_and_images()
             #Plot images
             self.plot_image(self.images)
             print("###############")
