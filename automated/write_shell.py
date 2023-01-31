@@ -1,10 +1,13 @@
 """Script for writing ThermalReflectance shell commands"""
+
+import numpy as np
+
 BEAM_WIDTH = 88200.
 BG_REP = 5
 
 
 def write_commands(f, repeat, power_ls, velocity, x_pos, y_min, y_max, pre, ring_size=30):
-    dwell = BEAM_WIDTH / velocity
+    dwell = np.round(BEAM_WIDTH / velocity, 2)
     one_line_commands(f, BG_REP, 0., dwell, x_pos, y_min, y_max, pre, ring_size)
     for power in power_ls:
         one_line_commands(f, repeat, power, dwell, x_pos, y_min, y_max, pre, ring_size)
@@ -24,7 +27,19 @@ def one_line_commands(f, repeat, power, dwell, x_pos, y_min, y_max, pre, ring_si
 
 if __name__ == "__main__":
     shell_name = "test.sh"
+    speeds = [9., 13., 20., 30., 45., 68., 103., 155., 190., 234., 352.]
+    x = 0
     with open(shell_name, 'w') as f:
-        write_commands(f, 1, [10. + 5*i for i in range(10)],
-                          100, x_pos=0, y_min=-8, y_max=8, pre="test", ring_size=30) 
+        for speed in speeds[::-1]:
+            if speed > 25: 
+                write_commands(f, 5, [10. + 5*i for i in range(10)],
+                           speed, x_pos=x, y_min=0, y_max=12,
+                           pre=f"{int(speed)}mm_per_sec",
+                           ring_size=60) 
+            else:
+                write_commands(f, 5, [10. + 5*i for i in range(10)],
+                           speed, x_pos=x, y_min=0, y_max=np.round(speed*0.58, 2),
+                           pre=f"{int(speed)}mm_per_sec",
+                           ring_size=60)
 
+        x += 2
