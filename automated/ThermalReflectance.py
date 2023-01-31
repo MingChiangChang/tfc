@@ -420,7 +420,7 @@ def parse():
     parser.add_argument('-m',    '--scanmode', type=str,   choices=['r', 's'], default = "s", help="Mode of operation along x: (r) range, (s) stationary")
     parser.add_argument('-fmin', '--framemin', type=int,   help="Lower bound of frame", default=0)
     parser.add_argument('-fmax', '--framemax', type=int,   help="Upper bound of frame (set to -1 to print all)", default=-1)
-    parser.add_argument('-f', '--frame', type=int, help="Frames per trigger.", default=30)
+    parser.add_argument('-f', '--frame', type=int, help="Frames per trigger.", default=60)
     parser.add_argument('-n', '--nruns',       type=int,   help="Number of runs of a stripe", default=1)
     parser.add_argument('-o', '--offset',      type=int,   help="Offset for the index of stripe", default=0)
 
