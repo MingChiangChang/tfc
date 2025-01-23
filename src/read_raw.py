@@ -1,3 +1,4 @@
+""" Function for dealing with Mike's raw files """
 from pathlib import Path
 from enum import Enum
 
@@ -9,15 +10,78 @@ import matplotlib.pyplot as plt
 from util import parse_fn, is_bg
 
 HEADER_LEN = 152 
-X_DIM = 1200 
-Y_DIM = 1920 
+# TODO: Make this into a class so filter can be constructed once the dimensions
+#       are specified.
+# FIXME: Need to modify this depend on what image size you are capturing
+X_DIM = 772#1024 # 1200 1024# 772   #1200 
+Y_DIM = 1024# 1280 # 1920 #1280# 1024 #1920 
 BLUE_FILTER = np.tile(np.vstack((np.zeros(Y_DIM), np.tile([1,0], Y_DIM//2))),
                      (X_DIM//2, 1))
 RED_FILTER = np.tile(np.vstack((np.tile([0, 1], Y_DIM//2), np.zeros(Y_DIM))),
                      (X_DIM//2, 1))
 GREEN_FILTER = np.tile(np.vstack((np.tile([1,0], Y_DIM//2), np.tile([0, 1], Y_DIM//2))), (X_DIM//2, 1))
 
-def load_blue(fp):
+class RawReader():
+
+    def __init__(self, x_dim, y_dim, header_len = 152):
+        self._x_dim = x_dim
+        self._y_dim = y_dim
+
+        self.set_filters()
+
+    @property
+    def x_dim(self):
+        return self._x_dim
+
+    @x_dim.setter
+    def x_dim(self, value):
+        self._x_dim = value
+        self.set_filters()
+
+    @property
+    def y_dim(self):
+        return self._y_dim
+
+    @y_dim.setter
+    def y_dim(self, value):
+        self._y_dim = value
+        self.set_filters()
+
+    def set_filters(self):
+        self.blue_filter = self.get_blue_filter()
+        self.red_filter = self.get_red_filter()
+        self.green_filter = self.get_green_filter()
+
+    def get_blue_filter(self):
+        return np.tile(np.vstack((np.zeros(self.y_dim), np.tile([1,0], self.y_dim//2))),
+                         (self.x_dim//2, 1))
+
+    def get_red_filter(self):
+        return np.tile(np.vstack((np.tile([0, 1], self.y_dim//2), np.zeros(self.y_dim))),
+                     (self.x_dim//2, 1))
+
+    def get_green_filter(self):
+        return np.tile(np.vstack((np.tile([1,0], self.y_dim//2),
+                                      np.tile([0, 1], self.y_dim//2))),
+                           (self.x_dim//2, 1))
+
+    def load_blue(self, fp):
+        with open(fp, 'br') as f:
+            data = f.read()
+
+        val = read_uint12(data[HEADER_LEN:])
+        val = val.reshape(self.x_dim, self.y_dim)
+        return get_interpolation(val, Color.Blue, self.blue_filter)
+
+
+    def read_uint12(self, data_chunk):
+        """ For little endien"""
+        data = np.frombuffer(data_chunk, dtype=np.uint8)
+        fst_uint8, snd_uint8 = np.reshape(data, (data.shape[0] // 2, 2)).astype(np.uint16).T
+        uint12 = fst_uint8 + (snd_uint8 << 8)
+        return uint12 
+
+def load_blue(fp, ):
     with open(fp, 'br') as f:
         data = f.read()
 
@@ -65,14 +129,15 @@ def get_color(pos_x: int, pos_y: int) -> Color:
         return Color.Blue
 
 # TODO: Bound check 
-def get_interpolation(data: np.array, pos_x: int, pos_y: int, color: Color):
-    interpolated = np.zeros(data.shape)
-    # Corners
-    interpolated[0, 0] = get_corner(data[0, 0], color)
-    interpolated[0, -1] = get_corner(data[0, -1], color)
-    interpolated[-1, 0] = get_corner(data[-1, 0], color)
-    interpolated[-1, -1] = get_corner(data[-1, -1], color)
-    # Edges
+
+# def get_interpolation(data: np.array, pos_x: int, pos_y: int, color: Color):
+#     interpolated = np.zeros(data.shape)
+#     # Corners
+#     interpolated[0, 0] = get_corner(data[0, 0], color)
+#     interpolated[0, -1] = get_corner(data[0, -1], color)
+#     interpolated[-1, 0] = get_corner(data[-1, 0], color)
+#     interpolated[-1, -1] = get_corner(data[-1, -1], color)
+#     # Edges
 
 # TODO: modify greens
 # Assuming the dimension are even numbers...
@@ -140,9 +205,7 @@ def get_blue_left_edge(data: np.array, pos_x: int):
     elif this_color == Color.Green:
         return (data[pos_x-1, 0] + data[pos_x+1, 0])/2
 
-
-
-def get_interpolation(data: np.array, color: Color) -> float:
+def get_interpolation(data: np.array, color: Color, _filter = None) -> float:
     # Corners
     new_data = np.zeros(data.shape)
     new_data[0, 0] = get_top_left_corner(data, color)
@@ -152,7 +215,8 @@ def get_interpolation(data: np.array, color: Color) -> float:
     # Edges
 
     if color == Color.Blue: # TODO: Use matrix operation instead for center pixels
-        blue = data * BLUE_FILTER
+        fil = BLUE_FILTER if _filter is None else _filter
+        blue = data * fil #BLUE_FILTER
         for i in range(1, data.shape[1]-1):
             new_data[0, i] = get_blue_top_edge(data, i)
             new_data[-1, i] = get_blue_bottom_edge(data, i)
@@ -173,7 +237,8 @@ def get_interpolation(data: np.array, color: Color) -> float:
         #    for pos_y in range(1, data.shape[1]-1):
         #        new_data[pos_x, pos_y] = get_b_interpolation(data, pos_x, pos_y)
     elif color == Color.Red:
-        red = data * RED_FILTER
+        fil = RED_FILTER if _filter is None else _filter
+        red = data * fil #RED_FILTER
         new_data += red 
         new_data += ( (np.roll(red, 1, axis=1)
                         + np.roll(red, -1, axis=1)
@@ -184,7 +249,8 @@ def get_interpolation(data: np.array, color: Color) -> float:
                         + np.roll(red, (1,-1), axis=(0,1))
                         + np.roll(red, (-1,-1), axis=(0,1))) /4)
     elif color == Color.Green:
-        green = data * GREEN_FILTER
+        fil = RED_FILTER if _filter is None else _filter
+        green = data * fil #GREEN_FILTER
         new_data += green 
         new_data += (   np.roll(green, (0,1), axis=(0,1))
                       + np.roll(green, (1,0), axis=(0,1))

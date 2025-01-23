@@ -2,4 +2,7 @@
 *.png
 *.pyc
 *.json
+*.svg
+*.pdf
+*.sh
 __pycache__/*
