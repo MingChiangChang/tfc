@@ -2,7 +2,8 @@
 
 import numpy as np
 
-from configure_1113 import Configs
+from configure_chess_2025 import Configs
+# from configure_focus import Configs
 
 BEAM_WIDTH = 88200.
 BG_REP = 5
@@ -33,16 +34,16 @@ def write_one_line_commands(f, repeat, power, dwell, x_pos, y_min, y_max, pre, f
 
 if __name__ == "__main__":
     # shell_name = "run.sh"
-    shell_name = "run_1113_extra.sh"
+    shell_name = "run_chess.sh"
     # speeds = [9., 13., 20., 30., 45., 68., 103., 155., 190., 234., 352.]
 
     # Try to reuse the center
-    x = -1 
+    x = 20 #[-5 + i for i in range(10)] 
     with open(shell_name, 'w') as f:
-        for v in sorted(config.POWER, reverse=True):
+        for idx, v in enumerate(sorted(config.POWER, reverse=True)):
             write_commands(f, 5, config.POWER[v],
                        v, x_pos=x, y_min=0, y_max=10,
                        pre=f"{int(v)}mm_per_sec",
-                       frame=config.N_FRAMES[v],
-                       ring_size=config.N_FRAMES[v],
+                       frame=config.MAX_FRAME[v],
+                       ring_size=config.MAX_FRAME[v],
                        ) 

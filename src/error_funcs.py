@@ -2,7 +2,6 @@
 import math
 
 import numpy as np
-import sympy as sp
 from scipy.stats import pearson3
 
 yth = 0 
@@ -54,7 +53,7 @@ def pearson3_func(height, skew, loc, scale):
 
 def two_exp(height, x_0, e, f):
     return lambda x: ( exponential_dist(x, height, x_0, e)*(x<=x_0).astype(int)
-                     + exponential_dist(x, height, x_0, )*(x>x_0).astype(int) )
+                     + exponential_dist(x, height, x_0, f)*(x>x_0).astype(int) )
 
 def two_reciprocal(height, x_0, e, f):
     return lambda x: height*( e/np.abs(x-x_0)*(x<=x_0).astype(int)

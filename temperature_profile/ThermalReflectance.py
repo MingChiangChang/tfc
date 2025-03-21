@@ -483,13 +483,13 @@ def get_clients(args):
     address = get_address(args)
     clients = {}
     try:
-        camera_client = ClientZOOCAMProtocol(connect = True, address = address)
+        camera_client = ClientZOOCAMProtocol(connect = True, address = address)#"CHESS_out")
         clients["camera"] = camera_client
     except:
         logger.error("Failed to open camera client")
         sys.exit(10)
     try:
-        lasgo_client   = ClientLasGoProtocol_Struct(connect = True, address =  address)
+        lasgo_client   = ClientLasGoProtocol_Struct(connect = True, address = address)# "CHESS_hutch")
         clients["lasgo"] = lasgo_client
     except:
         logger.error("Failed to open lasgo client")

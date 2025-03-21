@@ -1,19 +1,20 @@
 import sys
 sys.path.insert(1, '../')
-sys.path.insert(1, '/Users/ming/Desktop/Code/tfc/src')
+sys.path.insert(1, '../src')
 from pathlib import Path
-import json
 
 import numpy as np
 import matplotlib.pyplot as plt
 from tqdm import tqdm
 
 from TR_analyzer import Stripe_TR_analyzer, Single_TR_analyzer
-from configure_1113 import Configs
-from read_raw import load_blue
+from configure_chess_2025 import Configs
+# from configure_focus import Configs
+from read_raw import RawReader
 
 
 config = Configs() # global lol
+reader = RawReader(768, 1024)
 
 def main():
 
@@ -26,16 +27,16 @@ def main():
         path = path /  "temperature_profile" / f"{velo}mm_per_sec"
 
         bg_path = path / f"{str(dwell).zfill(5)}us_000.00W"
-        bg = load_raws_in_dir(bg_path)
+        bg = load_raws_in_dir(bg_path, config.MAX_FRAME[velo])[:,:config.MAX_FRAME[velo], :, :]
         bg = np.mean(bg, axis=0) 
         frame = config.FRAME[velo]
         
-        for power in tqdm(sorted(config.POWER[velo]), desc=f'{dwell}us'):
+        for power in tqdm(sorted(config.POWER[velo][-2:]), desc=f'{dwell}us'):
             print(power)
             
             dir_path = path / f"{str(dwell).zfill(5)}us_{power:06.2f}W" 
             print(str(dir_path))
-            raw = load_raws_in_dir(dir_path)
+            raw = load_raws_in_dir(dir_path, config.MAX_FRAME[velo])[:,:config.MAX_FRAME[velo], :, :]
             print("Finish loading..")
             print(raw.shape)
 
@@ -71,15 +72,15 @@ def main():
             
             
         
-def load_raws_in_dir(dir_path):
+def load_raws_in_dir(dir_path, ring_frames):
 
     files = np.array(sorted(dir_path.glob("*.raw")))
-    files = files.reshape((-1, config.NFRAMES))
+    files = files.reshape((-1, ring_frames))# config.NFRAMES))
     data = np.zeros((*files.shape, config.X_DIM, config.Y_DIM))
 
     for i in range(data.shape[0]):
         for j in range(data.shape[1]):
-            data[i, j] = load_blue(files[i, j])
+            data[i, j] = reader.load_blue(files[i, j])
 
     return data
 

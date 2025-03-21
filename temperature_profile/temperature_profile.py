@@ -5,8 +5,8 @@ Take the preprocessed results (jsons) and turn them in to temperature profile
 from pathlib import Path
 import glob
 import sys
-sys.path.insert(1, '../')
-sys.path.insert(1, '/Users/ming/Desktop/Code/tfc/src')
+# sys.path.insert(1, '../')
+sys.path.insert(1, '../src')
 import json
 import os
 
@@ -14,9 +14,12 @@ import numpy as np
 import matplotlib.pyplot as plt
 from scipy.optimize import leastsq
 
-from configure_1113 import Configs
+# from configure_1113 import Configs
+from configure_chess_2025 import Configs
 from error_funcs import test_new_temp_surface, twod_surface, cubic_surface
 from temp_calibration import fit_xy_to_z_surface_with_func
+
+default_colors = plt.rcParams['axes.prop_cycle'].by_key()['color']
 
 
 plt.rcParams.update({
@@ -88,7 +91,8 @@ def main():
     for velo in config.VELOCITY:
         for power in config.POWER[velo]:
                         
-            json_file = f"1113_analysis/{velo}mm_{power}W.json"
+            # json_file = f"1113_analysis/{velo}mm_{power}W.json"
+            json_file = f"chess_2025_analysis_2/{velo}mm_{power}W.json"
             with open(json_file, 'r') as f:
                 d = json.load(f)
 
@@ -103,7 +107,6 @@ def main():
                     right_width]
             full_data.append(data)
     full_data = np.array(full_data)
-    print(full_data.shape)
 
     # for i in range(10):
     for velo in config.VELOCITY:
@@ -116,60 +119,51 @@ def main():
     # plt.savefig("ΔR_R.svg")
     plt.show()
 
-    for i, velo in enumerate(sorted(config.MELT, key=int)):
+    for i, velo in enumerate(sorted(config.MELT_GOLD, key=int)):
         print(velo)
         velo_data_arr = full_data[np.where(full_data[:,0]==float(velo))]
-        print(full_data)
-        #plt.plot(velo_data_arr[:,1], velo_data_arr[:,2])
+        plt.scatter(velo_data_arr[:,1], velo_data_arr[:,2], label=f"{int(velo)}mm/s", c=default_colors[i])
         err = lambda p: exponential_fit(*p)(velo_data_arr[:,1]) - velo_data_arr[:,2]
         pfit, _ = leastsq(err, [1., 1.])
+        # print("exponential_fit")
+        print(f"{pfit}")
         fit_func = exponential_fit(*pfit)
-        # plt.plot(velo_data_arr[:,1], fit_func(velo_data_arr[:,1]))
+        plt.plot(velo_data_arr[:,1], fit_func(velo_data_arr[:,1]), c=default_colors[i])
         # plt.title(str(velo))
-        # plt.show()
 
         # RT = 24 C
+        # if velo in config.MELT_GOLD:
+        #     err = lambda p:( fit_func(config.MELT[velo])/p - 1390 
+        #                     + fit_func(config.MELT_GOLD[velo])/p - 1037 )
+        # else:
+        # err = lambda p: fit_func(config.MELT[velo])/p - 1390 
         # err = lambda p: ( fit_func(config.MELT[velo])/p - 1390 
         #                 + fit_func(config.MELT_GOLD[velo])/p - 1037 )
-        err = lambda p: fit_func(config.MELT[velo])/p - 1390 
-        # err = lambda p: fit_func(config.MELT_GOLD[velo])/p - 1037
+        err = lambda p: fit_func(config.MELT_GOLD[velo])/p - 1037
 
-        kappa, _ = leastsq(err, [0.00017])
+        kappa, _ = leastsq(err, [0.00013])
         fit_func = lambda x: exponential_fit(*pfit)(x)/kappa
         print(kappa)
-        # kappa = 0.00016429
-        # fit_func = lambda x: exponential_fit(*pfit)(x)/kappa
 
-        x = np.arange(30, 60)
-        # plt.plot(x, fit_func(x))
-
-        # plt.scatter(velo_data_arr[:,1], velo_data_arr[:,2]/kappa + t0, marker='o', color=colors[i])
-        # plt.plot([0], [0], label=f"{velo}mm/s", marker='o', color=colors[i])
-        # x = np.linspace(21, config.MELT[velo], 10)
-        # plt.plot(x, fit_func(x) + t0)
-        # plt.scatter([config.MELT[velo]], 1390 + t0, marker='*', c=colors[i], s=50)
+        x = np.arange(20, 80)
+        plt.plot(x, fit_func(x) + t0)
 
 
-        plt.scatter(velo_data_arr[:,1] / config.MELT[velo], velo_data_arr[:,2]/kappa + t0, marker='o', color=colors[i], label=f"{velo} mm/s")
-        # plt.plot([0], [0], label=f"{velo}mm/s", marker='o', color=colors[i])
+        plt.scatter(velo_data_arr[:,1] , velo_data_arr[:,2]/kappa + t0, marker='o', color=colors[i], label=f"{velo} mm/s")
         x = np.linspace(21, config.MELT[velo], 10)
-        # plt.plot(x/ config.MELT[velo], fit_func(x) + t0, linestyle=":")
-        # plt.scatter([config.MELT[velo]], 1390 + t0, marker='*', c=colors[i], s=50)
-        # plt.title(str(velo) + " mm/s")
-        # plt.legend()
-        # plt.xlabel("Laser Power (W)")
-        # plt.ylabel("Temperature (C)")
-        # plt.show()
+        plt.scatter([config.MELT[velo]], 1390 + t0, marker='*', c=colors[i], s=50)
+        if velo in config.MELT_GOLD:
+            plt.scatter([config.MELT_GOLD[velo]], 1037 + t0, marker='*', c=colors[i], s=50)
         full_data[np.where(full_data[:,0]==float(velo)), 2] /= kappa
 
         velo_data_arr = full_data[np.where(full_data[:,0]==float(velo))]
         fit_func = lambda x: exponential_fit(*pfit)(x)/kappa - 1040
         x_gold, _ = leastsq(fit_func, [40.])
-        print("Predicted gold power:", x_gold)
+        # print("Predicted gold power:", x_gold)
 
         fit_func = lambda x: exponential_fit(*pfit)(x)/kappa - 1390
         x_gold, _ = leastsq(fit_func, [40.])
-        print("Predicted si power:", x_gold)
+        # print("Predicted si power:", x_gold)
 
     velo = list(config.MELT)
     si_melt = [config.MELT[v] for v in velo]
@@ -180,10 +174,10 @@ def main():
     # plt.xlabel("Power (W)")
     plt.xlabel("Power / Si Melt Power")
     plt.legend()
-    plt.ylim(250, 1500)
-    plt.xlim(0.58, 1.00)
+    plt.ylim(400, 1500)
+    # plt.xlim(0.58, 1.00)
     # plt.xlim(25, 85)
-    plt.savefig("calibrated_temperature_normalized_power.pdf")
+    # plt.savefig("calibrated_temperature_normalized_power.pdf")
     plt.show()
 
     pfit, _, _ = fit_xy_to_z_surface_with_func(np.log10(full_data[:,0]),
@@ -195,7 +189,8 @@ def main():
     fit_func = test_new_temp_surface(*pfit)
 
     x = np.linspace(0.9, 2.7, 20)
-    y = np.linspace(30, 85, 20)
+    # y = np.linspace(30, 85, 20)
+    y = np.linspace(30, 70, 20)
     xx, yy = np.meshgrid(x, y)
     zz = fit_func(xx, yy)
     ax = plt.figure().add_subplot(projection='3d')
@@ -236,10 +231,12 @@ def main():
     
     fit_func = cubic_surface(*pfit)
     x = np.linspace(0.9, 2.7, 20)
-    y = np.linspace(30, 85, 20)
+    # y = np.linspace(30, 85, 20)
+    y = np.linspace(30, 70, 20)
     xx, yy = np.meshgrid(x, y)
     zz = fit_func(xx, yy)
-    mask = np.logical_and(zz > 200, zz < 450)
+    # mask = np.logical_and(zz > 200, zz < 450)
+    mask = np.logical_and(zz > 200, zz < 400)
     xx, yy, zz = xx[mask], yy[mask], zz[mask]
     ax = plt.figure().add_subplot(projection='3d')
     ax.scatter(np.log10(full_data[:,0]),
@@ -248,7 +245,8 @@ def main():
     ax.plot_trisurf(xx,
                     yy,
                     zz, alpha=0.4, cmap="inferno")
-    ax.set_zlim(200, 450)
+    # ax.set_zlim(200, 450)
+    ax.set_zlim(200, 400)
 
     ax.view_init(elev=15., azim=60)
     ax.set_xlabel("Velocity (10ˣ mm/s)")
@@ -277,10 +275,12 @@ def main():
 
     fit_func = twod_surface(*pfit)
     x = np.linspace(0.9, 2.7, 20)
-    y = np.linspace(30, 85, 20)
+    # y = np.linspace(30, 85, 20)
+    y = np.linspace(30, 70, 20)
     xx, yy = np.meshgrid(x, y)
     zz = fit_func(xx, yy)
     mask = np.logical_and(zz > 300, zz < 550)
+    # mask = np.logical_and(zz > 200, zz < 350)
     xx, yy, zz = xx[mask], yy[mask], zz[mask]
     ax = plt.figure().add_subplot(projection='3d')
     ax.scatter(np.log10(full_data[:,0]),
@@ -290,6 +290,7 @@ def main():
                     yy,
                     fit_func(xx, yy), alpha=0.4, cmap="inferno")
     ax.set_zlim(300, 550)
+    # ax.set_zlim(200, 350)
 
     ax.view_init(elev=15., azim=60)
     ax.set_xlabel("Velocity (10ˣ mm/s)")
